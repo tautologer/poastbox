@@ -165,7 +165,12 @@
       <p>Logged in as {$settings.handle}</p>
     {/if}
     <p>Show thread controls: <input type="checkbox" bind:checked={showThreadButtons} /></p>
-    <button on:click={logout}>Logout</button>
+    <button
+      on:click={async () => {
+        await logout();
+        page = "home";
+      }}>Logout</button
+    >
     <!-- <button on:click={() => (page = "home")}>Back</button> -->
   {:else}
     <h2>404</h2>
