@@ -161,7 +161,9 @@
     {/if}
   {:else if page === "settings"}
     <h2>Settings</h2>
-    <p>Logged in as {$settings.handle}</p>
+    {#if $agent}
+      <p>Logged in as {$settings.handle}</p>
+    {/if}
     <p>Show thread controls: <input type="checkbox" bind:checked={showThreadButtons} /></p>
     <button on:click={logout}>Logout</button>
     <!-- <button on:click={() => (page = "home")}>Back</button> -->
