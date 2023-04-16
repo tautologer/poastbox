@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RichText } from "@atproto/api";
+  import { BskyAgent, RichText } from "@atproto/api";
   import { slide } from "svelte/transition";
   import { agent, currentToast, errorToast, settings, successToast } from "./lib/stores";
   import { attemptResumeSession, logout } from "./lib/auth";
@@ -10,9 +10,62 @@
   attemptResumeSession($settings);
 
   let posts: string[] = [""];
-
   let posting = [false];
   let posted = [false];
+
+  const postThread = async () => {
+    if (!posts.every((p) => p.length > 0)) {
+      errorToast("Every post must have some text.");
+      return;
+    }
+    const richTexts = posts.map((p) => new RichText({ text: p }));
+    if (richTexts.some((r) => r.graphemeLength > 300)) {
+      errorToast("Every post must have less than 300 characters.");
+      return;
+    }
+
+    // the first post is a special case becuase it is the "root" post
+    let root: Awaited<ReturnType<BskyAgent["post"]>>;
+    posting[0] = true;
+    await richTexts[0].detectFacets($agent);
+    try {
+      root = await $agent.post({
+        text: richTexts[0].text,
+        facets: richTexts[0].facets,
+      });
+      posted[0] = true;
+    } catch (e) {
+      console.error(e);
+      errorToast("Post failed.");
+      return;
+    } finally {
+      posting[0] = false;
+    }
+
+    let parent: Awaited<ReturnType<BskyAgent["post"]>> = root;
+    for (let i = 1; i < richTexts.length; i++) {
+      posting[i] = true;
+      await richTexts[i].detectFacets($agent);
+      try {
+        parent = await $agent.post({
+          text: richTexts[i].text,
+          facets: richTexts[i].facets,
+          reply: {
+            root,
+            parent,
+          },
+        });
+        posted[i] = true;
+      } catch (e) {
+        console.error(e);
+        errorToast("Post failed.");
+        return;
+      } finally {
+        posting[i] = false;
+      }
+    }
+  };
+
   const post = async () => {
     if (!posts.every((p) => p.length > 0)) {
       errorToast("Please enter some text to post."); // TODO change this once threading is implemented
@@ -43,7 +96,19 @@
       posting[0] = false;
     }
   };
-  // toast
+
+  const addPostToThread = () => {
+    posts = [...posts, ""];
+    posting = [...posting, false];
+    posted = [...posted, false];
+  };
+  const removeLastPostFromThread = () => {
+    if (posts.length > 1) {
+      posts = posts.slice(0, -1);
+      posting = posting.slice(0, -1);
+      posted = posted.slice(0, -1);
+    }
+  };
 </script>
 
 {#if $currentToast}
@@ -64,7 +129,17 @@
       <PostInput bind:text={posts[index]} posting={posting[index]} posted={posted[index]} />
     {/each}
 
-    <button on:click={post}>Post</button>
+    <button on:click={addPostToThread}>+</button>
+    {#if posts.length > 1}
+      <button on:click={removeLastPostFromThread}>-</button>
+    {/if}
+    <br />
+    <br />
+    {#if posts.length === 1}
+      <button on:click={post}>Post</button>
+    {:else}
+      <button on:click={postThread}>Post Thread</button>
+    {/if}
     <br />
     <br />
     <button on:click={logout}>Logout</button>
