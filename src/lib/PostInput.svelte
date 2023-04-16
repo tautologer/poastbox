@@ -5,8 +5,9 @@
   export let posting: boolean;
   export let posted: boolean;
 
+  // set textarea height based on number of lines
   let height: string = "3em";
-  $: height = Math.min(text.split("\n").length * 1.25, 20) + "em"; // count number of lines
+  $: height = Math.min(text.split("\n").length * 1.2 + 0.5, 20) + "em";
 
   // reactive text stuff
   let richText: RichText;
