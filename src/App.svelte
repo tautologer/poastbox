@@ -103,7 +103,7 @@
       errorToast("Please enter some text to post.");
       return;
     }
-    if (richText.length > 300) {
+    if (richText.graphemeLength > 300) {
       errorToast("Please enter less than 300 characters.");
       return;
     }
@@ -168,7 +168,7 @@
 
 {#if $agent}
   <textarea bind:value={postText} />
-  <p>{richText.length} / 300 chars</p>
+  <p>{richText.graphemeLength} / 300 chars</p>
   <button on:click={post}>Post</button>
   <br />
   <br />
