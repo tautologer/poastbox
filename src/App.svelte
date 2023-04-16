@@ -49,7 +49,6 @@
     } catch (e) {
       console.error(e);
       errorToast("Post failed.");
-      return;
     } finally {
       posting[0] = false;
     }
@@ -76,6 +75,11 @@
         posting[i] = false;
       }
     }
+
+    posts = [""];
+    posting = [false];
+    posted = [false];
+    successToast("Thread posted!");
   };
 
   const post = async () => {
@@ -150,9 +154,9 @@
       {/if}
       <p>
         {#if posts.length === 1}
-          <button on:click={post}>Post</button>
+          <button on:click={post} disabled={posted[0] || posting[0]}>Post</button>
         {:else}
-          <button on:click={postThread}>Post Thread</button>
+          <button on:click={postThread} disabled={posted.some((t) => t) || posting.some((t) => t)}>Post Thread</button>
         {/if}
       </p>
     {:else}
