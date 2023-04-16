@@ -184,7 +184,7 @@
     </p>
     <p>
       Handle
-      <input type="text" bind:value={handle} />
+      <input type="text" bind:value={handle} placeholder="example.bsky.social" />
     </p>
     <p>
       Password
@@ -195,6 +195,7 @@
     </p>
     <button on:click={attemptLogin}>Login</button>
     <p>Don't enter your bluesky password into websites or apps that you don't trust.</p>
+    <p>You can view this app's source code <a href="https://github.com/tautologer/poastbox">on GitHub</a>.</p>
   {/if}
 {/if}
 
