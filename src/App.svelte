@@ -147,10 +147,10 @@
       {/each}
 
       {#if $settings.showThreadButtons}
-        <button on:click={addPostToThread}>+</button>
         {#if posts.length > 1}
           <button on:click={removeLastPostFromThread}>-</button>
         {/if}
+        <button on:click={addPostToThread}>+</button>
       {/if}
       <p>
         {#if posts.length === 1}
