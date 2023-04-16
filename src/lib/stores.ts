@@ -10,16 +10,19 @@ export type Settings = {
   service: string;
   handle: string;
   rememberMe: boolean;
+  showThreadButtons: boolean;
 };
 const DEFAULT_SETTINGS: Settings = {
   service: "https://bsky.social",
   handle: "",
   rememberMe: false,
+  showThreadButtons: true,
 };
 const initialSettings: Settings = {
   service: ls.get("poastbox.service", DEFAULT_SETTINGS.service),
   handle: ls.get("poastbox.handle", DEFAULT_SETTINGS.handle),
   rememberMe: ls.get("poastbox.rememberMe", DEFAULT_SETTINGS.rememberMe),
+  showThreadButtons: ls.get("poastbox.showThreadButtons", DEFAULT_SETTINGS.showThreadButtons),
 };
 const settingsStore = writable<Settings>(initialSettings);
 // note that this is also a valid store since it has a subscribe method:

@@ -6,8 +6,20 @@
   import LogIn from "./lib/LogIn.svelte";
   import PostInput from "./lib/PostInput.svelte";
 
-  // attempt resuming the session with the stored settings
-  attemptResumeSession($settings);
+  const initialSettings = $settings;
+  const attemptResumePromise = attemptResumeSession(initialSettings);
+
+  type Page = "home" | "settings";
+  let page: Page = "home";
+  const toggleSettings = () => {
+    if (page !== "settings") {
+      page = "settings";
+    } else {
+      page = "home";
+    }
+  };
+  let showThreadButtons = $settings.showThreadButtons;
+  $: settings.setSetting("showThreadButtons", showThreadButtons);
 
   let posts: string[] = [""];
   let posting = [false];
@@ -111,6 +123,8 @@
   };
 </script>
 
+<button on:click={toggleSettings} id="settingsToggle">⚙️</button>
+
 {#if $currentToast}
   <div id="toast" style="background-color: {$currentToast.color ?? 'blue'}; color: white;" transition:slide={{}}>
     {$currentToast.text}
@@ -119,33 +133,40 @@
 
 <h1>poastbox</h1>
 
-<!-- if you're looking at this, don't judge me... i hacked this together in like an hour lol -->
-
-{#await attemptResumeSession($settings)}
+{#await attemptResumePromise}
   <h2>Loading...</h2>
 {:then}
-  {#if $agent}
-    {#each posts as post, index}
-      <PostInput bind:text={posts[index]} posting={posting[index]} posted={posted[index]} />
-    {/each}
+  {#if page === "home"}
+    {#if $agent}
+      {#each posts as post, index}
+        <PostInput bind:text={posts[index]} posting={posting[index]} posted={posted[index]} />
+      {/each}
 
-    <button on:click={addPostToThread}>+</button>
-    {#if posts.length > 1}
-      <button on:click={removeLastPostFromThread}>-</button>
-    {/if}
-    <br />
-    <br />
-    {#if posts.length === 1}
-      <button on:click={post}>Post</button>
+      {#if $settings.showThreadButtons}
+        <button on:click={addPostToThread}>+</button>
+        {#if posts.length > 1}
+          <button on:click={removeLastPostFromThread}>-</button>
+        {/if}
+      {/if}
+      <p>
+        {#if posts.length === 1}
+          <button on:click={post}>Post</button>
+        {:else}
+          <button on:click={postThread}>Post Thread</button>
+        {/if}
+      </p>
     {:else}
-      <button on:click={postThread}>Post Thread</button>
+      <h2>post to bluesky. that's it</h2>
+      <LogIn />
     {/if}
-    <br />
-    <br />
+  {:else if page === "settings"}
+    <h2>Settings</h2>
+    <p>Show thread controls: <input type="checkbox" bind:checked={showThreadButtons} /></p>
     <button on:click={logout}>Logout</button>
+    <!-- <button on:click={() => (page = "home")}>Back</button> -->
   {:else}
-    <h2>post to bluesky. that's it</h2>
-    <LogIn />
+    <h2>404</h2>
+    <p>you shouldn't be seeing this, how did you get here?</p>
   {/if}
 {/await}
 
@@ -157,6 +178,15 @@
     width: 100%;
     padding: 10px;
     text-align: center;
+    z-index: 100;
+  }
+
+  #settingsToggle {
+    position: fixed;
+    top: 1em;
+    left: 1em;
+    border-radius: 50%;
+    padding: 10px;
     z-index: 100;
   }
 </style>

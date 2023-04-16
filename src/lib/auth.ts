@@ -37,7 +37,8 @@ export const attemptLogin = async (service: string, handle: string, password: st
   }
 };
 
-export const attemptResumeSession = async (settings: Settings) => {
+export const attemptResumeSession = async (settings: Settings, _agent?: BskyAgent) => {
+  if (_agent) return; // already logged in
   const session = ls.get("poastbox.session", null);
   if (session) {
     const _agent = new BskyAgent({
