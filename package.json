@@ -20,5 +20,6 @@
   },
   "dependencies": {
     "@atproto/api": "^0.2.7"
-  }
+  },
+  "license": "SEE LICENSE IN LICENSE"
 }
