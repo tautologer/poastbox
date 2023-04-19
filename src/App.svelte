@@ -6,6 +6,11 @@
   import LogIn from "./lib/LogIn.svelte";
   import PostInput from "./lib/PostInput.svelte";
 
+  const VERSION = "2023-03-19";
+
+  // util
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const initialSettings = $settings;
   const attemptResumePromise = attemptResumeSession(initialSettings);
 
@@ -26,13 +31,16 @@
   let posted = [false];
 
   const postThread = async () => {
+    const isThread = posts.length > 1;
     if (!posts.every((p) => p.length > 0)) {
-      errorToast("Every post must have some text.");
+      errorToast(isThread ? "Every post must have some text." : "Please enter some text to post.");
       return;
     }
     const richTexts = posts.map((p) => new RichText({ text: p }));
     if (richTexts.some((r) => r.graphemeLength > 300)) {
-      errorToast("Every post must have less than 300 characters.");
+      errorToast(
+        isThread ? "Every post must have less than 300 characters." : "Please enter less than 300 characters."
+      );
       return;
     }
 
@@ -79,38 +87,9 @@
     posts = [""];
     posting = [false];
     posted = [false];
-    successToast("Thread posted!");
-  };
 
-  const post = async () => {
-    if (!posts.every((p) => p.length > 0)) {
-      errorToast("Please enter some text to post."); // TODO change this once threading is implemented
-      return;
-    }
-    const richText = new RichText({ text: posts[0] });
-    if (richText.graphemeLength > 300) {
-      errorToast("Please enter less than 300 characters."); // TODO change this once threading is implemented
-      return;
-    }
-    posting[0] = true;
-    try {
-      await richText.detectFacets($agent);
-      await $agent.post({
-        text: richText.text,
-        facets: richText.facets,
-      });
-      successToast("Posted!");
-      posted[0] = true;
-      // reset everything at the end
-      posts = [""];
-      posting = [false];
-      posted = [false];
-    } catch (e) {
-      console.error(e);
-      errorToast("Post failed.");
-    } finally {
-      posting[0] = false;
-    }
+    successToast("Thread posted!");
+    await sleep(2000); // let's take a few seconds to savor the moment
   };
 
   const addPostToThread = () => {
@@ -138,7 +117,7 @@
 <h1>poastbox</h1>
 
 {#await attemptResumePromise}
-  <h2>Loading...</h2>
+  <h2>Connecting to bluesky...</h2>
 {:then}
   {#if page === "home"}
     {#if $agent}
@@ -153,11 +132,9 @@
         <button on:click={addPostToThread}>+</button>
       {/if}
       <p>
-        {#if posts.length === 1}
-          <button on:click={post} disabled={posted[0] || posting[0]}>Post</button>
-        {:else}
-          <button on:click={postThread} disabled={posted.some((t) => t) || posting.some((t) => t)}>Post Thread</button>
-        {/if}
+        <button on:click={postThread} disabled={posted.some((t) => t) || posting.some((t) => t)}>
+          {posts.length > 1 ? "Post Thread" : "Post"}
+        </button>
       </p>
     {:else}
       <h2>post to bluesky. that's it</h2>
@@ -175,6 +152,7 @@
         page = "home";
       }}>Logout</button
     >
+    <h5>Version {VERSION}</h5>
     <!-- <button on:click={() => (page = "home")}>Back</button> -->
   {:else}
     <h2>404</h2>
