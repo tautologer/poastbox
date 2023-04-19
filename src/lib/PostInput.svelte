@@ -22,7 +22,7 @@
   let graphemeLength: number;
   $: graphemeLength = richText.graphemeLength;
   let color: string = "black";
-  $: color = graphemeLength > 300 ? "red" : "black";
+  $: color = graphemeLength > 300 ? "red" : "inherit";
 </script>
 
 <textarea bind:value={text} disabled={posting || posted} bind:this={textarea} />
