@@ -9,7 +9,7 @@
   import { ls } from "./lib/localStorage";
   import type { Post, PostRef } from "./lib/types";
 
-  const VERSION = "2023-03-22.3";
+  const VERSION = "2023-03-22.4";
 
   const initialSettings = $settings;
   const attemptResumePromise = attemptResumeSession(initialSettings);
@@ -25,6 +25,18 @@
   };
   let showThreadButtons = $settings.showThreadButtons;
   $: settings.setSetting("showThreadButtons", showThreadButtons);
+
+  // if the posts array changes, we want to persist all those changes to localStorage
+  $: {
+    posts.forEach((p, i) => {
+      if (p.text.length > 0) ls.set(`editor.${i}`, p);
+      if (p.text.length === 0) ls.delete(`editor.${i}`);
+    });
+    ls.keys("editor.").forEach((key) => {
+      const index = parseInt(key.split(".")[1]);
+      if (index >= posts.length) ls.delete(key);
+    });
+  }
 
   // read saved editor state from localStorage
   const savedPosts = ls
