@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BskyAgent, RichText } from "@atproto/api";
+  import { RichText } from "@atproto/api";
   import { slide } from "svelte/transition";
   import { agent, currentToast, errorToast, settings, successToast } from "./lib/stores";
   import { attemptResumeSession, logout } from "./lib/auth";
@@ -7,6 +7,7 @@
   import PostInput from "./lib/PostInput.svelte";
   import { sleep } from "./lib/utils";
   import { ls } from "./lib/localStorage";
+  import type { Post, PostRef } from "./lib/types";
 
   const VERSION = "2023-03-22";
 
@@ -25,20 +26,14 @@
   let showThreadButtons = $settings.showThreadButtons;
   $: settings.setSetting("showThreadButtons", showThreadButtons);
 
-  let posts: string[] = [""];
-  let posting = [false];
-  let posted = [false];
-
-  type PostRef = {
-    uri: string;
-    cid: string;
-  };
+  let posts: Post[] = [{ text: "" }];
 
   const post = async (index: number, reply?: { root: PostRef; parent: PostRef }): Promise<PostRef | undefined> => {
-    posting[index] = true;
+    // we have to re-assign the post to trigger the <PostInput/> to re-render, mutating the object won't work
+    posts[index] = { ...posts[index], posting: true };
     let result;
+    const richText = new RichText({ text: posts[index].text });
     try {
-      const richText = new RichText({ text: posts[index] });
       await richText.detectFacets($agent);
       result = await $agent.post({
         text: richText.text,
@@ -46,23 +41,25 @@
         reply,
       });
       if (import.meta.env.DEV) ls.set("postedUris", [...ls.get("postedUris", []), result.uri]);
-      posted[index] = true;
+      posts[index] = { ...posts[index], posted: true };
     } catch (e) {
       console.error(e);
     } finally {
-      posting[index] = false;
+      // delete the posting property from the post
+      const { posting, ...rest } = posts[index];
+      posts[index] = rest;
       return result;
     }
   };
 
   const postThread = async () => {
     const isThread = posts.length > 1;
-    if (!posts.every((p) => p.length > 0)) {
+    if (!posts.every((p) => p.text.length > 0)) {
       errorToast(isThread ? "Every post must have some text." : "Please enter some text to post.");
       return;
     }
-    const richTexts = posts.map((p) => new RichText({ text: p }));
-    if (richTexts.some((r) => r.graphemeLength > 300)) {
+    const _posts = posts.map((p) => ({ ...p, richText: new RichText({ text: p.text }) }));
+    if (_posts.some((p) => p.richText.graphemeLength > 300)) {
       errorToast(
         isThread ? "Every post must have less than 300 characters." : "Please enter less than 300 characters."
       );
@@ -77,7 +74,7 @@
     }
 
     let parent: PostRef = root;
-    for (let i = 1; i < richTexts.length; i++) {
+    for (let i = 1; i < _posts.length; i++) {
       const result = await post(i, { root, parent });
       if (!result) {
         errorToast("Failed to post thread.");
@@ -89,21 +86,15 @@
     successToast(isThread ? "Thread posted!" : "Posted successfully!");
     await sleep(2000); // let's take a few seconds to savor the moment
 
-    posts = [""];
-    posting = [false];
-    posted = [false];
+    posts = [{ text: "" }];
   };
 
   const addPostToThread = () => {
-    posts = [...posts, ""];
-    posting = [...posting, false];
-    posted = [...posted, false];
+    posts = [...posts, { text: "" }];
   };
   const removeLastPostFromThread = () => {
     if (posts.length > 1) {
       posts = posts.slice(0, -1);
-      posting = posting.slice(0, -1);
-      posted = posted.slice(0, -1);
     }
   };
 </script>
@@ -123,8 +114,8 @@
 {:then}
   {#if page === "home"}
     {#if $agent}
-      {#each posts as post, index}
-        <PostInput bind:text={posts[index]} posting={posting[index]} posted={posted[index]} />
+      {#each posts as post}
+        <PostInput bind:post />
       {/each}
 
       {#if $settings.showThreadButtons}
@@ -134,7 +125,7 @@
         <button on:click={addPostToThread}>+</button>
       {/if}
       <p>
-        <button on:click={postThread} disabled={posted.some((t) => t) || posting.some((t) => t)}>
+        <button on:click={postThread} disabled={posts.some((p) => p.posting || p.posted)}>
           {posts.length > 1 ? "Post Thread" : "Post"}
         </button>
       </p>

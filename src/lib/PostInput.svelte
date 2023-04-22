@@ -1,9 +1,11 @@
 <script lang="ts">
   import { RichText } from "@atproto/api";
+  import type { Post } from "./types";
 
-  export let text: string = "";
-  export let posting: boolean;
-  export let posted: boolean;
+  // export let text: string = "";
+  // export let posting: boolean;
+  // export let posted: boolean;
+  export let post: Post;
 
   // reactively set textarea height based on scroll height
   let textarea: HTMLTextAreaElement;
@@ -13,11 +15,11 @@
       textarea.style.height = textarea.scrollHeight + 2 + "px";
     }
   };
-  $: adjustHeight(text);
+  $: adjustHeight(post.text);
 
   // reactive text stuff
   let richText: RichText;
-  $: richText = new RichText({ text });
+  $: richText = new RichText({ text: post.text });
 
   let graphemeLength: number;
   $: graphemeLength = richText.graphemeLength;
@@ -25,10 +27,10 @@
   $: color = graphemeLength > 300 ? "red" : "inherit";
 </script>
 
-<textarea bind:value={text} disabled={posting || posted} bind:this={textarea} />
-{#if posted}
+<textarea bind:value={post.text} disabled={post.posting || post.posted} bind:this={textarea} />
+{#if post.posted}
   <p>Posted ✅</p>
-{:else if posting}
+{:else if post.posting}
   <p>Posting...</p>
 {:else}
   <p style={`color: ${color};`}>{graphemeLength} / 300 chars</p>
