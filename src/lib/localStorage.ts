@@ -18,4 +18,14 @@ export const ls = {
   delete: (key: string) => {
     localStorage.removeItem(PREFIX + key);
   },
+  keys: (pattern?: string | RegExp) => {
+    const keys = Object.keys(localStorage).map((key) => key.replace(PREFIX, ""));
+    if (!pattern) return keys;
+    return keys.filter((key) => {
+      if (typeof pattern === "string") {
+        return key.includes(pattern);
+      }
+      return pattern.test(key);
+    });
+  },
 };

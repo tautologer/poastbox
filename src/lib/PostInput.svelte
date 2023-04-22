@@ -1,11 +1,17 @@
 <script lang="ts">
   import { RichText } from "@atproto/api";
   import type { Post } from "./types";
+  import { ls } from "./localStorage";
 
   // export let text: string = "";
   // export let posting: boolean;
   // export let posted: boolean;
   export let post: Post;
+  export let persistenceKey: string | undefined = undefined;
+
+  // persist the post as a draft
+  $: if (persistenceKey && post.text.length > 0) ls.set(persistenceKey, post);
+  $: if (persistenceKey && post.text.length === 0) ls.delete(persistenceKey);
 
   // reactively set textarea height based on scroll height
   let textarea: HTMLTextAreaElement;

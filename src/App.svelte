@@ -26,7 +26,12 @@
   let showThreadButtons = $settings.showThreadButtons;
   $: settings.setSetting("showThreadButtons", showThreadButtons);
 
-  let posts: Post[] = [{ text: "" }];
+  // read saved editor state from localStorage
+  const savedPosts = ls
+    .keys("editor.")
+    .map((key) => ls.get(key, null))
+    .filter((p) => !!p);
+  let posts: Post[] = savedPosts.length ? savedPosts : [{ text: "" }];
 
   const post = async (index: number, reply?: { root: PostRef; parent: PostRef }): Promise<PostRef | undefined> => {
     // we have to re-assign the post to trigger the <PostInput/> to re-render, mutating the object won't work
@@ -83,6 +88,9 @@
       parent = result;
     }
 
+    // TODO later store this to localStorage so we can show your posted threads
+    ls.keys("editor.").forEach((key) => ls.delete(key));
+
     successToast(isThread ? "Thread posted!" : "Posted successfully!");
     await sleep(2000); // let's take a few seconds to savor the moment
 
@@ -114,8 +122,8 @@
 {:then}
   {#if page === "home"}
     {#if $agent}
-      {#each posts as post}
-        <PostInput bind:post />
+      {#each posts as post, index}
+        <PostInput bind:post persistenceKey={`editor.${index}`} />
       {/each}
 
       {#if $settings.showThreadButtons}
