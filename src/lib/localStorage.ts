@@ -1,6 +1,8 @@
+const PREFIX = "poastbox.";
+
 export const ls = {
   get: (key: string, defaultValue: any) => {
-    const value = localStorage.getItem(key);
+    const value = localStorage.getItem(PREFIX + key);
     if (value) {
       try {
         return JSON.parse(value);
@@ -11,9 +13,9 @@ export const ls = {
     return defaultValue;
   },
   set: (key: string, value: any) => {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(PREFIX + key, JSON.stringify(value));
   },
   delete: (key: string) => {
-    localStorage.removeItem(key);
+    localStorage.removeItem(PREFIX + key);
   },
 };

@@ -5,11 +5,10 @@
   import { attemptResumeSession, logout } from "./lib/auth";
   import LogIn from "./lib/LogIn.svelte";
   import PostInput from "./lib/PostInput.svelte";
+  import { sleep } from "./lib/utils";
+  import { ls } from "./lib/localStorage";
 
-  const VERSION = "2023-03-19";
-
-  // util
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const VERSION = "2023-03-22";
 
   const initialSettings = $settings;
   const attemptResumePromise = attemptResumeSession(initialSettings);
@@ -30,6 +29,32 @@
   let posting = [false];
   let posted = [false];
 
+  type PostRef = {
+    uri: string;
+    cid: string;
+  };
+
+  const post = async (index: number, reply?: { root: PostRef; parent: PostRef }): Promise<PostRef | undefined> => {
+    posting[index] = true;
+    let result;
+    try {
+      const richText = new RichText({ text: posts[index] });
+      await richText.detectFacets($agent);
+      result = await $agent.post({
+        text: richText.text,
+        facets: richText.facets,
+        reply,
+      });
+      if (import.meta.env.DEV) ls.set("postedUris", [...ls.get("postedUris", []), result.uri]);
+      posted[index] = true;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      posting[index] = false;
+      return result;
+    }
+  };
+
   const postThread = async () => {
     const isThread = posts.length > 1;
     if (!posts.every((p) => p.length > 0)) {
@@ -45,43 +70,20 @@
     }
 
     // the first post is a special case becuase it is the "root" post
-    let root: Awaited<ReturnType<BskyAgent["post"]>>;
-    posting[0] = true;
-    await richTexts[0].detectFacets($agent);
-    try {
-      root = await $agent.post({
-        text: richTexts[0].text,
-        facets: richTexts[0].facets,
-      });
-      posted[0] = true;
-    } catch (e) {
-      console.error(e);
-      errorToast("Post failed.");
-    } finally {
-      posting[0] = false;
+    const root = await post(0);
+    if (!root) {
+      errorToast("Failed to post" + isThread ? " thread." : ".");
+      return;
     }
 
-    let parent: Awaited<ReturnType<BskyAgent["post"]>> = root;
+    let parent: PostRef = root;
     for (let i = 1; i < richTexts.length; i++) {
-      posting[i] = true;
-      await richTexts[i].detectFacets($agent);
-      try {
-        parent = await $agent.post({
-          text: richTexts[i].text,
-          facets: richTexts[i].facets,
-          reply: {
-            root,
-            parent,
-          },
-        });
-        posted[i] = true;
-      } catch (e) {
-        console.error(e);
-        errorToast("Post failed.");
+      const result = await post(i, { root, parent });
+      if (!result) {
+        errorToast("Failed to post thread.");
         return;
-      } finally {
-        posting[i] = false;
       }
+      parent = result;
     }
 
     successToast(isThread ? "Thread posted!" : "Posted successfully!");

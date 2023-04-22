@@ -2,7 +2,7 @@ import { BskyAgent } from "@atproto/api";
 import { ls } from "./localStorage";
 import { agent, errorToast, settings, successToast, type Settings } from "./stores";
 
-const persistSession = (event: any, sess: any) => ls.set("poastbox.session", sess);
+const persistSession = (event: any, sess: any) => ls.set("session", sess);
 
 export const attemptLogin = async (service: string, handle: string, password: string, rememberMe: boolean) => {
   if (service && handle && password) {
@@ -39,7 +39,7 @@ export const attemptLogin = async (service: string, handle: string, password: st
 
 export const attemptResumeSession = async (settings: Settings, _agent?: BskyAgent) => {
   if (_agent) return; // already logged in
-  const session = ls.get("poastbox.session", null);
+  const session = ls.get("session", null);
   if (session) {
     const _agent = new BskyAgent({
       service: settings.service,
@@ -54,13 +54,13 @@ export const attemptResumeSession = async (settings: Settings, _agent?: BskyAgen
       }
     } catch (e) {
       console.log(e);
-      ls.set("poastbox.session", null);
+      ls.set("session", null);
     }
   }
 };
 
 export const logout = () => {
   agent.set(null);
-  ls.set("poastbox.session", null);
+  ls.set("session", null);
   successToast("Logged out");
 };

@@ -19,17 +19,17 @@ const DEFAULT_SETTINGS: Settings = {
   showThreadButtons: true,
 };
 const initialSettings: Settings = {
-  service: ls.get("poastbox.service", DEFAULT_SETTINGS.service),
-  handle: ls.get("poastbox.handle", DEFAULT_SETTINGS.handle),
-  rememberMe: ls.get("poastbox.rememberMe", DEFAULT_SETTINGS.rememberMe),
-  showThreadButtons: ls.get("poastbox.showThreadButtons", DEFAULT_SETTINGS.showThreadButtons),
+  service: ls.get("service", DEFAULT_SETTINGS.service),
+  handle: ls.get("handle", DEFAULT_SETTINGS.handle),
+  rememberMe: ls.get("rememberMe", DEFAULT_SETTINGS.rememberMe),
+  showThreadButtons: ls.get("showThreadButtons", DEFAULT_SETTINGS.showThreadButtons),
 };
 const settingsStore = writable<Settings>(initialSettings);
 // note that this is also a valid store since it has a subscribe method:
 export const settings = {
   subscribe: settingsStore.subscribe,
   setSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    ls.set(`poastbox.${key}`, value);
+    ls.set(`${key}`, value);
     settingsStore.update((prev) => {
       return { ...prev, [key]: value };
     });
