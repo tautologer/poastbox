@@ -9,7 +9,7 @@
   import { ls } from "./lib/localStorage";
   import type { Post, PostRef } from "./lib/types";
 
-  const VERSION = "2023-03-22.1";
+  const VERSION = "2023-03-22.2";
 
   const initialSettings = $settings;
   const attemptResumePromise = attemptResumeSession(initialSettings);
@@ -125,7 +125,7 @@
         <button on:click={addPostToThread}>+</button>
       {/if}
       <p>
-        <button on:click={postThread} disabled={posts.some((p) => p.posting || p.posted)}>
+        <button on:click={postThread} disabled={posts.some((p) => p.text.length < 1 || p.posting || p.posted)}>
           {posts.length > 1 ? "Post Thread" : "Post"}
         </button>
       </p>
