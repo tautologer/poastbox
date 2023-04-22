@@ -84,12 +84,12 @@
       }
     }
 
+    successToast(isThread ? "Thread posted!" : "Posted successfully!");
+    await sleep(2000); // let's take a few seconds to savor the moment
+
     posts = [""];
     posting = [false];
     posted = [false];
-
-    successToast("Thread posted!");
-    await sleep(2000); // let's take a few seconds to savor the moment
   };
 
   const addPostToThread = () => {
