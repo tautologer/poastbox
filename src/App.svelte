@@ -9,7 +9,7 @@
   import { ls } from "./lib/localStorage";
   import type { Post, PostRef } from "./lib/types";
 
-  const VERSION = "2023-03-22.2";
+  const VERSION = "2023-03-22.3";
 
   const initialSettings = $settings;
   const attemptResumePromise = attemptResumeSession(initialSettings);
